@@ -1,13 +1,12 @@
-import React from 'react';
-import ReactDOM from 'react-dom/client';
-import './index.css';
-import App from './App';
-import reportWebVitals from './reportWebVitals';
+import React from "react";
+import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
+import RouterCustom from "./router";
+import "./styles/style.scss"; 
 
-const root = ReactDOM.createRoot(document.getElementById('root'));
+const root = ReactDOM.createRoot(document.getElementById("root"));
 root.render(
-  <h1>Xin chào các ban!</h1>
-);
-
-
-reportWebVitals();
+  <BrowserRouter>
+    <RouterCustom />
+  </BrowserRouter>
+); 

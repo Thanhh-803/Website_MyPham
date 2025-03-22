@@ -1,0 +1,71 @@
+@use "sass:map";
+@import "./src/styles/pages/theme.scss";
+@import "./src/styles/pages/all.scss";
+
+
+.login {
+    input {
+        width: 100%;
+    }
+
+    min-height: 90vh;
+    display: flex;
+    align-items: center;
+    justify-content: center; // Nội dung vào giữa
+    background-color: #f8f9fa;
+
+    &_container {
+        background: #fff;
+        padding: 100px;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    &_title {
+        font-weight: 600;
+        color: map.get($theme-colors, "normal-text");
+        margin-bottom: 24px;
+         h2 {
+            text-align: center;
+            font-size: 24px;
+            font-weight: 600;
+            color: map.get($theme-colors, "main");
+            margin-bottom: 12px;
+         }
+    }
+    &_form {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+    }
+    &_form_group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+    }
+    &_label {
+        font-size: 14px;
+        font-weight: 500;
+        color: map.get($theme-colors, "normal-text");
+    }
+
+    &_button {
+        height: 46px;
+        font-size: 14px;
+        font-weight: 600;
+        color: #ffffff;
+        background: map.get($theme-colors, "main");
+        border-radius: 4px;
+        cursor: pointer;
+    }
+    &_text {
+        text-align: center;
+        margin-top: 15px;
+        font-size: 14px;
+        a {
+            color: map.get($theme-colors, "main");
+            text-decoration: none;
+            font-weight: bold;
+        }
+    }
+}
