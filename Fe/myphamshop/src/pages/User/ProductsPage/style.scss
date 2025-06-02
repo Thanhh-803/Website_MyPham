@@ -56,5 +56,47 @@
             }
         }
     }
+    .product_footer {
+        display: flex;
+        justify-content: flex-start; /* căn trái thay vì giữa */
+        margin-left: 600px !important; /* đẩy sang phải một chút */
+        margin-top: 30px;
+        padding-bottom: 40px;
+    }
+    
+    .product_pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .product_page-number {
+        display: flex;
+        gap: 5px;
+    }
+    
+    .product_page-btn {
+        padding: 8px 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        background-color: #fff;
+        color: #111;
+        font-size: 14px;
+        cursor: pointer;
+        transition: all 0.2s ease-in-out;
+    }
+    
+    .product_page-btn:hover {
+        background-color: #6d80a6;
+        border-color: #ccc;
+    }
+    
+    .product_page-btn--active {
+        background-color: #1f2937; // màu tối (xám đậm)
+        color: #fff;
+        border-color: #1f2937;
+        font-weight: 600;
+    }
+    
 
 }

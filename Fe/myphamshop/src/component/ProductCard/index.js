@@ -6,13 +6,13 @@ import { generatePath, Link } from "react-router-dom";
 import {formatter} from "utils/fomatter"
 import { ROUTERS } from "utils/router";
 
-const ProductCard = ({img, name, price }) => {
+const ProductCard = ({image, name, price }) => {
     return (
         <>
             <div className="featured_item pl-pr-10 ">
                 <div className="featured_item_img"
                     style={{
-                        backgroundImage: `url(${img})`
+                        backgroundImage: `url(https://localhost:7007/images/${image})`
                     }}>
                     <ul className="featured_item_img_hover">
                         <li>
@@ -25,7 +25,7 @@ const ProductCard = ({img, name, price }) => {
                 </div>
                 <div className="featured_item_text">
                     <h6>                            
-                        <Link to={generatePath(ROUTERS.USER.PRODUCTS, {id:1})}>
+                        <Link to={generatePath(ROUTERS.USER.PRODUCTS, {productId:1})}>
                             {name}
                         </Link>
                     </h6>

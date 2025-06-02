@@ -9,6 +9,11 @@
     img {
         flex: 0 0 50%;
         object-fit: cover; // cho hình đẹp 1 tý
+        width: 380px;
+    }
+
+    .product_details_picture {
+        position: relative;
     }
 
     .main {

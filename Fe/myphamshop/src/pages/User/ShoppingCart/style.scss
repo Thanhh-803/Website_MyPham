@@ -59,17 +59,35 @@
     .shopping_discount {
         display: flex;
         align-items: center;
-        padding-right: 20px;
-        column-gap: 20px;
+        padding-right: 10px;
+        column-gap: 3px;
+        margin-left: -2px;
 
         button {
-            height: 40px;
+            height: 37px;
             width: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
+            border-radius: 6px;
         }
     }
+    .discount-message {
+        font-size: 16px;
+        font-weight: bold;
+        color: #d9534f; /* Màu đỏ, dễ nhận thấy */
+        background-color: #f8d7da; /* Màu nền nhẹ nhàng */
+        padding: 10px;
+        border-radius: 5px;
+        margin-top: 10px;
+        border: 1px solid #f5c6cb;
+        text-align: center;
+        width: 338px;
+    }
+
+        .discount-message p {
+        margin: 0;
+        }
 }
 
 .shopping_checkout {

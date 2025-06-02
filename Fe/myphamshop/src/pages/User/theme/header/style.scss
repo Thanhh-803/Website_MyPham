@@ -52,21 +52,29 @@
     justify-content: flex-end;
     align-items: center;
     padding:10px 0 13px ;
+
+    
     ul {
         display: flex;
         column-gap: 10px;
         list-style: none; // Bỏ danh scahs các dấu chấmchấm
+
+        
+
 
         a {
             font-size: 14px;
             display: inline-block;
             color:  map.get($theme-colors, "normal-text");
         }
+
+        
         
         li:last-child {
             cursor: pointer;
             margin-left: 10px;
-
+            
+            
             span {
                 font-size: 14px;
                 margin-left: 2px;
@@ -75,6 +83,29 @@
 
         
     }
+}
+
+.marquee-wrapper {
+  overflow: hidden;
+  white-space: nowrap;
+  background: #414c62;
+  color: #ffffff;
+  padding: 5px 0;
+}
+
+.marquee {
+  display: inline-block;
+  padding-left: 100%;
+  animation: marquee 15s linear infinite;
+}
+
+@keyframes marquee {
+  0% {
+    transform: translateX(0%);
+  }
+  100% {
+    transform: translateX(-100%);
+  }
 }
 
 .header_logo{
@@ -94,7 +125,7 @@
             position: relative;
             a {
                 text-decoration: none;
-                font-size: 10px;
+                font-size: 12px;
                 color: map.get($theme-colors, "bold-text");
                 text-transform: uppercase;
                 font-weight: bold;

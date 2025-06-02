@@ -11,13 +11,15 @@ import { AiOutlineFacebook,
          AiOutlineMenu,
          AiOutlinePhone,
          AiOutlineDownCircle,
-         AiOutlineUpCircle} from "react-icons/ai";
+         AiOutlineUpCircle,
+         AiOutlineLogout} from "react-icons/ai";
 
 import { MdEmail } from "react-icons/md";
 
 import "./style.scss"
 import { ROUTERS } from "utils/router";
 import { formatter } from "utils/fomatter";
+import axios from "axios";
 
 export const categories = [
         "Sữa rửa mặt",
@@ -27,6 +29,13 @@ export const categories = [
 
 const Header = () => {
     const navigate = useNavigate(); 
+    const [username, setUsername] = useState(""); 
+    const [cartDetails, setCartDetails] = useState({
+        totalCartPrice: 0,
+        quantity: 0,
+        originalTotal: 0 
+    });
+
     const location = useLocation();
     // const[isShowCategories, setisShowCategories] = useState([false]);
     const[isShowHamberger, setisShowHamberger] = useState([false]);
@@ -35,26 +44,17 @@ const Header = () => {
     const[menus, setMenus] = useState([
         {
             name:"Trang chủ",
-            path: ROUTERS.USER.HOME,
+            path: ROUTERS.USER.HOMEPAGE,
         },
         {
             name:"Về chúng tôi",
-            path: ROUTERS.USER.ABOUT
+            path: ROUTERS.USER.ABOUT,
         },
         {
             name:"Sản phẩm",
             path: ROUTERS.USER.PRODUCT,
             isShowSubmenu: false,
-            child: [
-                {
-                    name:"Sữa rửa mặt",
-                    path: "",
-                },
-                {
-                    name:"Kem dưỡng ẩm",
-                    path: "",
-                },
-            ],
+            child: [],
         },
         {
             name:"Blog",
@@ -66,17 +66,159 @@ const Header = () => {
         }
     ])
 
+    // Hàm gọi API để lấy thông tin người dùng
+    const getUserInfo = async () => {
+        try {
+            const token = localStorage.getItem("token");  // Lấy token từ localStorage
+            const response = await axios.get("https://localhost:7200/api/Auth/me", {
+                headers: {
+                    Authorization: `Bearer ${token}`,
+                },
+            });
+    
+            console.log(response.data);  // In ra dữ liệu trả về từ API để kiểm tra
+            setUsername(response.data.username);  // Cập nhật state với username
+        } catch (error) {
+            console.error("Error fetching user info", error);
+        }
+    };
+
+    // Gọi API khi component được render lần đầu
+    useEffect(() => {
+        getUserInfo();
+    }, []);
     
 
+    // Thực hiện đăng xuất
+    const handleLogout = () => {
+        localStorage.removeItem("token");
+        setUsername(null);
+        navigate(ROUTERS.USER.HOME);
+    };
+
+
+    // Lấy danh mục theo sản phẩm
     useEffect(() => {
-        const isHome = location.pathname.length <= 1;
+        const fetchCategories = async () => {
+          try {
+            const res = await axios.get("https://localhost:7007/api/category");
+            const categories = res.data.map((item) => ({
+              name: item.name,
+              path: `${ROUTERS.USER.CATEGORY_PRODUCTS}/${item.categoryId}`,
+
+            }));
+    
+            // Cập nhật menu
+            setMenus((prev) =>
+              prev.map((menu) =>
+                menu.name === "Sản phẩm"
+                  ? { ...menu, child: categories }
+                  : menu
+              )
+            );
+          } catch (error) {
+            console.error("Lỗi khi lấy danh mục:", error);
+          }
+        };
+    
+        fetchCategories();
+      }, []);
+
+
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+    // Lấy toàn bộ danh mục
+    useEffect(() => {
+        const fetchCategory = async () => {
+            try {
+                const response = await axios.get("https://localhost:7007/api/Category");
+                setCategories(response.data);
+            } catch (err) {
+                setError("Không thể tải danh mục!");
+                console.error(err);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchCategory();
+    }, []);
+    // Thực hiện ẩn banner ngoại trừ 2 trang HOME và HOMES
+    useEffect(() => {
+        const isHome = location.pathname === "/" || location.pathname === ROUTERS.USER.HOMEPAGE;
         setIsHome(isHome);
         setisShowCategories(isHome);
-    }, [location]
-    );
+    }, [location]);
+    // Thực hiện lấy tổng tiền và số lượng trong giỏ hàng
+    const fetchCartDetails = async () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+          setCartDetails({ quantity: 0, totalCartPrice: 0, originalTotal: 0});
+          return;
+        }
+    
+        try {
+          const response = await axios.get("https://localhost:7099/api/Cart/user-cart", {
+            headers: {
+              Authorization: `Bearer ${token}`,
+            },
+          });
+    
+          if (response.status === 200) {
+            setCartDetails(response.data);
+          } else {
+            setCartDetails({ quantity: 0, totalCartPrice: 0, originalTotal: 0 });
+            console.warn("Không thể lấy thông tin giỏ hàng!");
+          }
+        } catch (error) {
+          console.error("Lỗi khi lấy giỏ hàng:", error);
+          setCartDetails({ quantity: 0, totalCartPrice: 0, originalTotal: 0 });
+        }
+      };
+    // Theo dõi sự thay đổi token trong localStorage + kiểm tra định kỳ (Trong giỏ hàng)
+    useEffect(() => {
+    const checkTokenAndFetch = () => {
+        const token = localStorage.getItem("token");
+        if (!token) {
+        setCartDetails({ quantity: 0, totalCartPrice: 0 });
+        } else {
+        fetchCartDetails();
+        }
+    };
+
+    // Lắng nghe khi storage thay đổi ở tab khác
+    const handleStorageChange = () => {
+        console.log("Storage event fired");
+        checkTokenAndFetch();
+    };
+
+    window.addEventListener("storage", handleStorageChange);
+
+    // Check định kỳ trong cùng tab
+    const interval = setInterval(checkTokenAndFetch, 3000); // Mỗi 3 giây
+
+    // Lấy lần đầu khi component mounted
+    checkTokenAndFetch();
+
+    return () => {
+        window.removeEventListener("storage", handleStorageChange);
+        clearInterval(interval);
+    };
+    }, []);
+    const [searchTerm, setSearchTerm] = useState("");
+     
+    const handleSearch = (e) => {
+        e.preventDefault();
+        if (!searchTerm.trim()) return;
+      
+        // Điều hướng sang trang kết quả kèm từ khóa
+        navigate(`${ROUTERS.USER.SEARCHPAGE}?keyword=${encodeURIComponent(searchTerm)}`);
+      };
+      
 
     return (
         <>
+            {/* Sidebar khi thu nhỏ màn hình */}
             <div className={`hamberger_menu_overlay ${
                 isShowHamberger ? "active" : ""
             }`}
@@ -177,7 +319,7 @@ const Header = () => {
             </div>
             
 
-            {/* Tạo một thanh Header */}
+            {/* Tạo một thanh Header trên cùng*/}
             <div className="header_top">
                 <div className="container">
                     <div className="row">
@@ -186,7 +328,7 @@ const Header = () => {
                                 <li>
                                     <AiOutlineMail />
                                     <span>
-                                        Thanhh@gmail.com
+                                        baebeauty@gmail.com
                                     </span>
                                 </li>
                                 <li>
@@ -217,17 +359,82 @@ const Header = () => {
                                         <AiFillTwitterCircle />
                                     </Link>
                                 </li>
-                                <li>
-                                    <Link to={""}>
-                                        <AiOutlineUser />
-                                    </Link>
-                                    <span onClick={() => navigate(ROUTERS.ADMIN.LOGIN)}>Đăng nhập</span>
-                                </li>
+                                {username ? (
+                                <>
+                                    <li 
+                                        className="name" 
+                                        style={{
+                                            display: 'flex', 
+                                            alignItems: 'center', /* Căn giữa icon và text theo chiều dọc */
+                                            gap: '5px', /* Khoảng cách giữa icon và text */
+                                            cursor: 'pointer', /* Con trỏ dạng tay khi hover */
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: '#333',
+                                            transition: 'color 0.3s ease, transform 0.3s ease'
+                                        }}
+                                        onClick={() => navigate(ROUTERS.USER.MYACCOUNT)}
+                                    >
+                                        <AiOutlineUser 
+                                            style={{
+                                                fontSize: '18px', /* Kích thước icon */
+                                                color: '#666', /* Màu icon mặc định */
+                                                transition: 'color 0.3s ease, transform 0.3s ease'
+                                            }}
+                                        />
+                                        <span style={{
+                                                color: '#333', /* Màu text mặc định */
+                                                transition: 'color 0.3s ease' /* Mượt khi hover */
+                                            }}
+                                        >
+                                            Xin chào, <span style={{ color: '#0d6efd' }}>{username}</span>
+                                        </span>
+                                    </li>
+                                    <li 
+                                        className="logout" 
+                                        onClick={handleLogout} 
+                                        style={{
+                                            display: 'flex', 
+                                            alignItems: 'center', /* Căn giữa icon và text theo chiều dọc */
+                                            gap: '5px', /* Khoảng cách giữa icon và text */
+                                            cursor: 'pointer', /* Con trỏ dạng tay khi hover */
+                                            fontSize: '14px',
+                                            fontWeight: '500',
+                                            color: '#333',
+                                            transition: 'color 0.3s ease, transform 0.3s ease'
+                                        }}
+                                    >
+                                        <AiOutlineLogout 
+                                            style={{
+                                                fontSize: '18px', /* Kích thước icon */
+                                                color: '#666', /* Màu icon mặc định */
+                                                transition: 'color 0.3s ease, transform 0.3s ease' /* Mượt khi hover */
+                                            }}
+                                        />
+                                        <span 
+                                            style={{
+                                                color: '#333', /* Màu text mặc định */
+                                                transition: 'color 0.3s ease' /* Mượt khi hover */
+                                            }}
+                                        >
+                                            Đăng xuất
+                                        </span>
+                                    </li>
+                                    </>
+                                    ) : (
+                                        <li onClick={() => navigate(ROUTERS.ADMIN.LOGIN)} style={{ cursor: 'pointer' }}>
+                                            <AiOutlineUser />
+                                            <span>Đăng nhập</span>
+                                        </li>
+                                    )}
                             </ul>
                         </div>
                     </div>
                 </div>
             </div>
+            <marquee className="marquee-wrapper" behavior="scroll" direction="left" scrollamount="6" >
+                💥 Ưu đãi đặc biệt trong tuần này: Nhập ngay voucher BIGSAVE25 để giảm 25% cho đơn từ 200.000đ! 💥 Mua 2 tặng 1 cho dòng sản phẩm skincare cao cấp!
+            </marquee>
             {/* Tạo một logo và thanh menu */}
             <div className="container">
                 <div className="row">
@@ -259,13 +466,13 @@ const Header = () => {
                     <div className="col-lg-3">
                         <div className="header_cart">
                             <div className="header_cart_price">
-                                    <span>{formatter(1000000)}</span>
+                            <span>{formatter(cartDetails.originalTotal || 0)}</span>
                                 </div>
                             <ul>
                                 <li>
                                     <Link to={ROUTERS.USER.SHOPPING_CART}>
                                         <AiOutlineShoppingCart />
-                                        <span>5</span>
+                                        <span>{cartDetails.quantity}</span> 
                                         </Link>
                                 </li>
                             </ul>
@@ -282,29 +489,39 @@ const Header = () => {
             <div className="container">
                 <div className="row here_categories_container">
                     <div className="col-lg-3 col-md-12 col-sm-12 col-xs-12 here_categories">
-                            <div className="here_categories_all" 
-                            onClick={() => setisShowCategories(!isShowCategories)}>
-                                <AiOutlineMenu />
-                                Danh sách sản phẩm
-                            </div>
-                            {isShowCategories && (
-                                <ul className={isShowCategories ? "" : "hidden"}>
-                                    {
-                                        categories.map((categories, key) => (
-                                            <li key = {key}>
-                                                <Link to= {ROUTERS.USER.PRODUCT}>{categories}</Link>
-                                            </li>
-                                        ))
-                                    }
-                                </ul>
+                        <div
+                            className="here_categories_all"
+                            onClick={() => setisShowCategories(!isShowCategories)}
+                        >
+                            <AiOutlineMenu />
+                            Danh sách sản phẩm
+                        </div>
+
+                        {isShowCategories && (
+                            <ul className="category_list">
+                            {loading ? (
+                                <li>Đang tải...</li>
+                            ) : error ? (
+                                <li>{error}</li>
+                            ) : (
+                                categories.map((category) => (
+                                <li key={category.categoryId}>
+                                    <Link to={`${ROUTERS.USER.CATEGORY_PRODUCTS}/${category.categoryId}`}>
+                                    {category.name}
+                                    </Link>
+                                </li>
+                                ))
                             )}
-                            
+                            </ul>
+                        )}
                     </div>
+                    { /*Thanh tìm kiếm*/}
                     <div className="col-lg-9 col-md-12 col-sm-12 col-xs-12 here_search_container">
                         <div className="here_search">
                             <div className="here_search_form">
-                                <form>
-                                    <input type="text" name="" value= "" placeholder="Bạn đang tìm gì?" />
+                                <form onSubmit={handleSearch}>
+                                    <input type="text" name=""  placeholder="Bạn đang tìm gì?" value={searchTerm}
+                                    onChange={(e) => setSearchTerm(e.target.value)}/>
                                     <button type="submit" className="site-btn">Tìm kiếm</button>
                                 </form>
                             </div>
@@ -325,7 +542,7 @@ const Header = () => {
                                     <span>Lan tỏa vẻ đẹp mới</span>
                                     <h2>Làn da mới</h2>
                                     <p>Miễn phí giao hàng toàn quốc</p>
-                                    <Link to="" className="primary-btn">
+                                    <Link to={ROUTERS.USER.PRODUCT} className="primary-btn">
                                         Mua ngay
                                     </Link>
                                 </div>
